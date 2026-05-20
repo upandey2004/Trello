@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { boardService } from '../services/boardService';
 import { useAuth } from '../context/AuthContext';
+import { Link } from 'react-router-dom';
 
 export default function Dashboard() {
     const [boards, setBoards] = useState([]);
@@ -49,14 +50,23 @@ export default function Dashboard() {
             </form>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '15px' }}>
-                {boards.map(board => (
-                    <div key={board.id} style={{ border: '1px solid #ccc', padding: '15px', borderRadius: '8px' }}>
-                        <h3>{board.name}</h3>
-                        <p>{board.description}</p>
-                    </div>
-                ))}
-                {boards.length === 0 && <p>No boards found. Create one above!</p>}
+    {boards.map(board => (
+        <Link 
+            to={`/boards/${board.id}`} 
+            key={board.id} 
+            style={{ textDecoration: 'none', color: 'inherit' }}
+        >
+            <div style={{ border: '1px solid #ccc', padding: '15px', borderRadius: '8px', height: '100%', transition: 'box-shadow 0.2s' }}
+                 onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)'}
+                 onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}
+            >
+                <h3>{board.name}</h3>
+                <p>{board.description}</p>
             </div>
+        </Link>
+    ))}
+    {boards.length === 0 && <p>No boards found. Create one above!</p>}
+</div>
         </div>
     );
 }

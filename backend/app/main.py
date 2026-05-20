@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import auth, boards
+from app.api import auth, boards,sections
 
 app = FastAPI(title="Trello Clone API")
 
@@ -15,6 +15,7 @@ app.add_middleware(
 
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
 app.include_router(boards.router, prefix="/api/v1/boards", tags=["Boards"])
+app.include_router(sections.router, prefix="/api/v1/sections", tags=["Sections"])
 
 @app.get("/health")
 def health_check():

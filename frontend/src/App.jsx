@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import './App.css'; // You can delete the default App.css styles if they mess up the layout
+import BoardDetail from './pages/BoardDetail';
 
 function App() {
     return (
@@ -22,6 +23,14 @@ function App() {
                         } 
                     />
                     <Route path="*" element={<Navigate to="/boards" replace />} />
+                    <Route 
+    path="/boards/:boardId" 
+    element={
+        <ProtectedRoute>
+            <BoardDetail />
+        </ProtectedRoute>
+    } 
+/>
                 </Routes>
             </Router>
         </AuthProvider>

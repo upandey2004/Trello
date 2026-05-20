@@ -37,3 +37,35 @@ class BoardService:
             return [item["boards"] for item in res.data if item.get("boards")]
         except Exception as e:
             raise HTTPException(status_code=400, detail=str(e))
+        
+    def get_board(self, board_id: str, user_id: str):
+        # 1. Verify the user is actually a member of this board
+        member_check = self.client.table("board_members").select("*").eq("board_id", board_id).eq("user_id", user_id).execute()
+        if not member_check.data:
+            raise HTTPException(status_code=403, detail="You do not have access to this board")
+            
+        # 2. Fetch and return the board details
+        res = self.client.table("boards").select("*").eq("id", board_id).execute()
+        if not res.data:
+            raise HTTPException(status_code=404, detail="Board not found")
+        return res.data[0]
+
+    def join_board(self, user_id: str, token: str):
+        # 1. Find the board by its unique invitation token
+        res = self.client.table("boards").select("*").eq("invitation_token", token).execute()
+        if not res.data:
+            raise HTTPException(status_code=404, detail="Invalid or expired invitation link")
+        
+        board = res.data[0]
+
+        # 2. Check if the user is already a member
+        member_check = self.client.table("board_members").select("*").eq("board_id", board["id"]).eq("user_id", user_id).execute()
+        
+        # 3. If not a member, add them to the board_members table
+        if not member_check.data:
+            self.client.table("board_members").insert({
+                "board_id": board["id"],
+                "user_id": user_id
+            }).execute()
+            
+        return board

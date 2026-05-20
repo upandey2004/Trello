@@ -6,6 +6,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import './App.css'; // You can delete the default App.css styles if they mess up the layout
 import BoardDetail from './pages/BoardDetail';
+import JoinBoard from './pages/JoinBoard';
 
 function App() {
     return (
@@ -28,6 +29,14 @@ function App() {
     element={
         <ProtectedRoute>
             <BoardDetail />
+        </ProtectedRoute>
+    } 
+/>
+<Route 
+    path="/invite/:token" 
+    element={
+        <ProtectedRoute>
+            <JoinBoard />
         </ProtectedRoute>
     } 
 />

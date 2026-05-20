@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react';
 import { ticketService } from '../services/ticketService';
+import TicketModal from './TicketModal.jsx'; // <-- Import the new modal component
 
 export default function SectionColumn({ section, onDeleteSection }) {
     const [tickets, setTickets] = useState([]);
     const [newTicketName, setNewTicketName] = useState('');
     const [isAdding, setIsAdding] = useState(false);
+    
+    // New state to track which ticket is currently being edited
+    const [editingTicket, setEditingTicket] = useState(null);
 
     useEffect(() => {
         loadTickets();
@@ -23,19 +27,17 @@ export default function SectionColumn({ section, onDeleteSection }) {
         e.preventDefault();
         if (!newTicketName.trim()) return;
         try {
-            await ticketService.createTicket({ 
-                name: newTicketName, 
-                section_id: section.id 
-            });
+            await ticketService.createTicket({ name: newTicketName, section_id: section.id });
             setNewTicketName('');
             setIsAdding(false);
-            loadTickets(); // Refresh this column's tickets
+            loadTickets();
         } catch (error) {
             console.error("Failed to create ticket", error);
         }
     };
 
-    const handleDeleteTicket = async (ticketId) => {
+    const handleDeleteTicket = async (e, ticketId) => {
+        e.stopPropagation(); // Prevents the modal from opening when you click delete
         if (!window.confirm("Delete this card?")) return;
         try {
             await ticketService.deleteTicket(ticketId);
@@ -45,29 +47,38 @@ export default function SectionColumn({ section, onDeleteSection }) {
         }
     };
 
+    // New function to handle saving the edited ticket
+    const handleSaveTicket = async (ticketId, updatedData) => {
+        try {
+            await ticketService.updateTicket(ticketId, updatedData);
+            setEditingTicket(null); // Close the modal
+            loadTickets(); // Refresh the list to show the new title
+        } catch (error) {
+            console.error("Failed to update ticket", error);
+        }
+    };
+
     return (
         <div style={{ minWidth: '280px', width: '280px', background: '#f4f3ec', padding: '15px', borderRadius: '8px', flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
-            {/* Column Header */}
+            
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
                 <h3 style={{ margin: 0, fontSize: '18px', color: '#08060d' }}>{section.name}</h3>
-                <button onClick={() => onDeleteSection(section.id)} style={{ padding: '4px 8px', background: 'transparent', color: 'red', border: 'none', cursor: 'pointer' }}>
-                    X
-                </button>
+                <button onClick={() => onDeleteSection(section.id)} style={{ padding: '4px 8px', background: 'transparent', color: 'red', border: 'none', cursor: 'pointer' }}>X</button>
             </div>
             
-            {/* Tickets List */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '15px', flexGrow: 1, overflowY: 'auto' }}>
                 {tickets.map(ticket => (
-                    <div key={ticket.id} style={{ padding: '10px', background: '#fff', borderRadius: '6px', color: '#08060d', fontSize: '15px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div 
+                        key={ticket.id} 
+                        onClick={() => setEditingTicket(ticket)} // <-- Click to open modal
+                        style={{ padding: '10px', background: '#fff', borderRadius: '6px', color: '#08060d', fontSize: '15px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', cursor: 'pointer' }}
+                    >
                         <span>{ticket.name}</span>
-                        <button onClick={() => handleDeleteTicket(ticket.id)} style={{ border: 'none', background: 'transparent', color: '#aaa', cursor: 'pointer', fontSize: '12px' }}>
-                            X
-                        </button>
+                        <button onClick={(e) => handleDeleteTicket(e, ticket.id)} style={{ border: 'none', background: 'transparent', color: '#aaa', cursor: 'pointer', fontSize: '12px' }}>X</button>
                     </div>
                 ))}
             </div>
 
-            {/* Add Card Form / Button */}
             {isAdding ? (
                 <form onSubmit={handleAddTicket} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <textarea 
@@ -79,14 +90,23 @@ export default function SectionColumn({ section, onDeleteSection }) {
                         rows={2}
                     />
                     <div style={{ display: 'flex', gap: '8px' }}>
-                        <button type="submit" style={{ background: '#aa3bff', color: 'white', padding: '6px 12px', flexGrow: 1 }}>Add Card</button>
-                        <button type="button" onClick={() => { setIsAdding(false); setNewTicketName(''); }} style={{ background: '#e5e4e7', color: '#333', padding: '6px 12px' }}>Cancel</button>
+                        <button type="submit" style={{ background: '#aa3bff', color: 'white', padding: '6px 12px', flexGrow: 1, border: 'none', borderRadius: '4px' }}>Add Card</button>
+                        <button type="button" onClick={() => { setIsAdding(false); setNewTicketName(''); }} style={{ background: '#e5e4e7', color: '#333', padding: '6px 12px', border: 'none', borderRadius: '4px' }}>Cancel</button>
                     </div>
                 </form>
             ) : (
                 <button onClick={() => setIsAdding(true)} style={{ width: '100%', background: 'transparent', color: '#6b6375', textAlign: 'left', padding: '8px', border: 'none', cursor: 'pointer', borderRadius: '4px' }}>
                     + Add a card
                 </button>
+            )}
+
+            {/* Conditionally render the modal if a ticket is selected */}
+            {editingTicket && (
+                <TicketModal 
+                    ticket={editingTicket} 
+                    onClose={() => setEditingTicket(null)} 
+                    onSave={handleSaveTicket} 
+                />
             )}
         </div>
     );

@@ -69,3 +69,16 @@ class BoardService:
             }).execute()
             
         return board
+    
+    def get_board_members(self, board_id: str):
+        # Fetch the users from the board_members table
+        res = self.client.table("board_members").select("user_id, users:user_id(id, email, first_name, last_name)").eq("board_id", board_id).execute()
+        
+        # Clean up the response
+        members = []
+        for item in res.data:
+            # Note: Supabase auth.users isn't directly queryable this way by default unless exposed. 
+            # If 'users' join fails due to Supabase auth schema restrictions, 
+            # we will return just the user_id for now.
+            members.append(item)
+        return members

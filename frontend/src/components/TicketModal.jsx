@@ -4,10 +4,12 @@ export default function TicketModal({ ticket, onClose, onSave }) {
     // Local state for the form so we only save when the user clicks "Save"
     const [name, setName] = useState(ticket.name);
     const [description, setDescription] = useState(ticket.description || '');
+    const [assignedTo, setAssignedTo] = useState(ticket.assigned_to || '');
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        onSave(ticket.id, { name, description });
+        // Pass the assigned_to value back to the parent component
+        onSave(ticket.id, { name, description, assigned_to: assignedTo });
     };
 
     return (
@@ -41,6 +43,18 @@ export default function TicketModal({ ticket, onClose, onSave }) {
                             onChange={(e) => setDescription(e.target.value)} 
                             placeholder="Add a more detailed description..."
                             style={{ width: '100%', padding: '10px', boxSizing: 'border-box', borderRadius: '4px', border: '1px solid #ccc', fontSize: '14px', minHeight: '120px', resize: 'vertical', fontFamily: 'inherit' }}
+                        />
+                    </div>
+
+                    {/* New Assigned To Field */}
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#08060d' }}>Assigned To (User ID)</label>
+                        <input 
+                            type="text" 
+                            value={assignedTo} 
+                            onChange={(e) => setAssignedTo(e.target.value)} 
+                            placeholder="Paste User UUID here..."
+                            style={{ width: '100%', padding: '10px', boxSizing: 'border-box', borderRadius: '4px', border: '1px solid #ccc', fontSize: '14px' }}
                         />
                     </div>
 

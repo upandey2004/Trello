@@ -11,14 +11,11 @@ export default function BoardDetail() {
     const [error, setError] = useState('');
     const [board, setBoard] = useState(null);
 
-    // Load board details and sections when the page opens
     useEffect(() => {
         const loadInitialData = async () => {
             try {
-                // Fetch the board to get the name and invite token
                 const boardData = await boardService.getBoard(boardId);
                 setBoard(boardData);
-                // Fetch the sections
                 await loadSections();
             } catch (err) {
                 setError(err.message);
@@ -27,7 +24,6 @@ export default function BoardDetail() {
         loadInitialData();
     }, [boardId]);
 
-    // Isolated so we can call it individually after creating/deleting lists
     const loadSections = async () => {
         try {
             const data = await sectionService.getBoardSections(boardId);
@@ -42,40 +38,58 @@ export default function BoardDetail() {
         if (!newSectionName.trim()) return;
         
         try {
-            await sectionService.createSection({
-                name: newSectionName,
-                board_id: boardId
-            });
+            await sectionService.createSection({ name: newSectionName, board_id: boardId });
             setNewSectionName('');
-            loadSections(); // Refresh lists
+            loadSections();
         } catch (err) {
             setError(err.message);
         }
     };
 
     const handleDeleteSection = async (sectionId) => {
-        if (!window.confirm("Are you sure you want to delete this section and all its tickets?")) return;
+        if (!window.confirm("Delete this entire list and all its cards?")) return;
         try {
             await sectionService.deleteSection(sectionId);
-            loadSections(); // Refresh lists
+            loadSections();
         } catch (err) {
             setError(err.message);
         }
     };
 
     return (
-        <div style={{ padding: '20px', height: '100vh', display: 'flex', flexDirection: 'column', textAlign: 'left', boxSizing: 'border-box' }}>
+        <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-board)' }}>
             
-            {/* Header Area */}
-            <div style={{ display: 'flex', gap: '15px', alignItems: 'center', marginBottom: '20px', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                    <Link to="/boards" style={{ textDecoration: 'none', padding: '8px 12px', background: '#e5e4e7', color: '#08060d', borderRadius: '4px' }}>
-                        &larr; Back to Boards
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', backgroundColor: 'var(--bg-card)', borderBottom: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
+                <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                    <Link 
+                        to="/boards" 
+                        style={{
+                            padding: '8px 16px',
+                            backgroundColor: 'var(--bg-list)',
+                            color: 'var(--text-main)',
+                            borderRadius: 'var(--radius-md)',
+                            fontWeight: '600',
+                            fontSize: '14px',
+                            border: '1px solid #e5e7eb',
+                            transition: 'all 0.2s',
+                            textDecoration: 'none',
+                            display: 'inline-block'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = 'var(--bg-card)';
+                            e.currentTarget.style.borderColor = 'var(--text-light)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'var(--bg-list)';
+                            e.currentTarget.style.borderColor = '#e5e7eb';
+                        }}
+                    >
+                        ← Back
                     </Link>
-                    <h2>{board ? board.name : 'Loading Board...'}</h2>
+                    <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '700', color: 'var(--text-main)' }}>{board ? board.name : 'Loading...'}</h2>
                 </div>
                 
-                {/* Share Button (Only visible after board data loads) */}
                 {board && (
                     <button 
                         onClick={() => {
@@ -83,39 +97,77 @@ export default function BoardDetail() {
                             navigator.clipboard.writeText(inviteUrl);
                             alert("Invite link copied to clipboard!");
                         }}
-                        style={{ padding: '8px 16px', background: '#aa3bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                        style={{
+                            padding: '10px 18px',
+                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: 'var(--radius-md)',
+                            cursor: 'pointer',
+                            fontWeight: '600',
+                            fontSize: '14px',
+                            transition: 'all 0.2s'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.target.style.transform = 'translateY(-2px)';
+                            e.target.style.boxShadow = 'var(--shadow-lg)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.target.style.transform = 'translateY(0)';
+                            e.target.style.boxShadow = 'none';
+                        }}
                     >
-                        Share / Invite
+                        Share Board
                     </button>
                 )}
             </div>
             
-            {error && <p style={{ color: 'red' }}>{error}</p>}
+            {error && <div style={{ padding: '12px 24px', backgroundColor: 'rgba(251,113,133,0.08)', color: 'var(--danger)', fontWeight: '500', fontSize: '14px' }}>{error}</div>}
 
-            {/* Kanban Horizontal Scroll Container */}
-            <div style={{ display: 'flex', gap: '20px', overflowX: 'auto', paddingBottom: '20px', flexGrow: 1, alignItems: 'flex-start' }}>
+            {/* Kanban Canvas */}
+            <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', padding: '24px', flexGrow: 1, alignItems: 'flex-start' }}>
                 
-                {/* Render the SectionColumn components */}
                 {sections.map(section => (
-                    <SectionColumn 
-                        key={section.id} 
-                        section={section} 
-                        onDeleteSection={handleDeleteSection} 
-                    />
+                    <SectionColumn key={section.id} section={section} onDeleteSection={handleDeleteSection} />
                 ))}
 
-                {/* Add New Section Form */}
-                <form onSubmit={handleCreateSection} style={{ minWidth: '280px', width: '280px', background: 'rgba(170, 59, 255, 0.1)', padding: '15px', borderRadius: '8px', flexShrink: 0 }}>
+                {/* Add List Form */}
+                <form onSubmit={handleCreateSection} style={{ minWidth: '280px', width: '280px', backgroundColor: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: 'var(--radius-lg)', flexShrink: 0, backdropFilter: 'blur(6px)', border: '2px dashed var(--border)', transition: 'all 0.2s' }}>
                     <input 
                         type="text" 
                         placeholder="+ Add another list" 
                         value={newSectionName} 
                         onChange={(e) => setNewSectionName(e.target.value)} 
-                        style={{ width: '100%', padding: '8px', boxSizing: 'border-box', marginBottom: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
+                        style={{ width: '100%', padding: '12px 14px', boxSizing: 'border-box', marginBottom: '8px', borderRadius: 'var(--radius-md)', border: 'none', backgroundColor: 'var(--bg-card)', boxShadow: 'inset 0 0 0 1px var(--border)', fontSize: '14px', fontWeight: '500', color: 'var(--text-main)' }}
                     />
-                    {newSectionName && <button type="submit" style={{ width: '100%', background: '#aa3bff', color: 'white', padding: '8px', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Save List</button>}
+                    {newSectionName && (
+                        <button 
+                            type="submit" 
+                            style={{
+                                width: '100%',
+                                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                color: 'white',
+                                padding: '10px',
+                                border: 'none',
+                                borderRadius: 'var(--radius-md)',
+                                cursor: 'pointer',
+                                fontWeight: '600',
+                                fontSize: '14px',
+                                transition: 'all 0.2s'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.target.style.transform = 'translateY(-2px)';
+                                e.target.style.boxShadow = 'var(--shadow-md)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.target.style.transform = 'translateY(0)';
+                                e.target.style.boxShadow = 'none';
+                            }}
+                        >
+                            Add List
+                        </button>
+                    )}
                 </form>
-                
             </div>
         </div>
     );

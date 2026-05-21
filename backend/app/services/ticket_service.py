@@ -11,7 +11,7 @@ class TicketService:
         res = self.client.table("tickets").select("*").eq("section_id", section_id).order("created_at").execute()
         return res.data
 
-    def create_ticket(self, ticket_in: TicketCreate, user_id: str):
+    def create_ticket(self, ticket_in: TicketCreate, user_id: str, user_email: str):
         # Any board member may add new cards.
         section_res = self.client.table("sections").select("board_id").eq("id", ticket_in.section_id).execute()
         if not section_res.data:
@@ -28,6 +28,9 @@ class TicketService:
             raise HTTPException(status_code=403, detail="Only board members can add a new card")
 
         data = ticket_in.model_dump()
+        if not data.get("assigned_to") and owner_id != user_id:
+            data["assigned_to"] = user_email
+
         data["created_by"] = user_id
 
         try:
@@ -63,8 +66,15 @@ class TicketService:
         board_res = self.client.table("boards").select("owner_id").eq("id", board_id).execute()
         owner_id = board_res.data[0]["owner_id"]
         
-        # Board owner can always modify. Invited users can only modify tickets they created.
-        if user_id != owner_id and user_id != ticket.get("created_by"):
+        # Board owner can always modify.
+        created_by = ticket.get("created_by")
+        is_creator = created_by == user_id
+
+        # If created_by is not available in the DB schema yet, fall back to assigned_to for member-created tickets.
+        if created_by is None:
+            is_creator = ticket.get("assigned_to") == user_email
+
+        if user_id != owner_id and not is_creator:
             raise HTTPException(status_code=403, detail="Only the board owner or ticket creator can modify this ticket.")
             
         return ticket

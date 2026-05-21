@@ -24,7 +24,7 @@ def create_ticket(
     client: Client = Depends(get_supabase_client)
 ):
     service = TicketService(client)
-    return service.create_ticket(ticket_in, current_user.id)
+    return service.create_ticket(ticket_in, current_user.id, current_user.email)
 
 @router.put("/{ticket_id}", response_model=TicketResponse)
 def update_ticket(

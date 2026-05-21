@@ -34,8 +34,8 @@ def update_ticket(
     client: Client = Depends(get_supabase_client)
 ):
     service = TicketService(client)
-    # Pass current_user.id here
-    return service.update_ticket(ticket_id, ticket_in, current_user.id) 
+    # Pass the user's email into the service
+    return service.update_ticket(ticket_id, ticket_in, current_user.id, current_user.email) 
 
 @router.delete("/{ticket_id}")
 def delete_ticket(
@@ -44,5 +44,5 @@ def delete_ticket(
     client: Client = Depends(get_supabase_client)
 ):
     service = TicketService(client)
-    # Pass current_user.id here
-    return service.delete_ticket(ticket_id, current_user.id)
+    # Pass the user's email into the service
+    return service.delete_ticket(ticket_id, current_user.id, current_user.email)

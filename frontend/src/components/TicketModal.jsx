@@ -48,12 +48,12 @@ export default function TicketModal({ ticket, onClose, onSave }) {
 
                     {/* New Assigned To Field */}
                     <div>
-                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: 'var(--text-main)', fontSize: '14px' }}>Assigned To (User ID)</label>
+                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: 'var(--text-main)', fontSize: '14px' }}>Assigned To (Email Address)</label>
                         <input 
                             type="text" 
                             value={assignedTo} 
                             onChange={(e) => setAssignedTo(e.target.value)} 
-                            placeholder="Paste User UUID here..."
+                            placeholder="Paste User Email here..."
                                 style={{ width: '100%', padding: '10px 12px', boxSizing: 'border-box', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', fontSize: '14px', fontFamily: 'inherit', transition: 'all 0.2s', background: 'var(--bg-card)', color: 'var(--text-main)' }}
                         />
                     </div>

@@ -22,7 +22,19 @@ class SectionService:
         res = self.client.table("sections").insert(data).execute()
         return res.data[0]
 
-    def update_section(self, section_id: str, section_in: SectionUpdate):
+    def update_section(self, section_id: str, section_in: SectionUpdate, user_id: str):
+        # Only the board owner may update a list.
+        section_res = self.client.table("sections").select("board_id").eq("id", section_id).execute()
+        if not section_res.data:
+            raise HTTPException(status_code=404, detail="Section not found")
+        
+        board_id = section_res.data[0]["board_id"]
+        board_res = self.client.table("boards").select("owner_id").eq("id", board_id).execute()
+        if not board_res.data:
+            raise HTTPException(status_code=404, detail="Board not found")
+        if board_res.data[0]["owner_id"] != user_id:
+            raise HTTPException(status_code=403, detail="Only the board owner can edit a list")
+        
         # Only update fields that were actually provided
         update_data = {k: v for k, v in section_in.model_dump().items() if v is not None}
         if not update_data:
@@ -33,7 +45,19 @@ class SectionService:
             raise HTTPException(status_code=404, detail="Section not found")
         return res.data[0]
 
-    def delete_section(self, section_id: str):
+    def delete_section(self, section_id: str, user_id: str):
+        # Only the board owner may delete a list.
+        section_res = self.client.table("sections").select("board_id").eq("id", section_id).execute()
+        if not section_res.data:
+            raise HTTPException(status_code=404, detail="Section not found")
+        
+        board_id = section_res.data[0]["board_id"]
+        board_res = self.client.table("boards").select("owner_id").eq("id", board_id).execute()
+        if not board_res.data:
+            raise HTTPException(status_code=404, detail="Board not found")
+        if board_res.data[0]["owner_id"] != user_id:
+            raise HTTPException(status_code=403, detail="Only the board owner can delete a list")
+        
         res = self.client.table("sections").delete().eq("id", section_id).execute()
         if not res.data:
             raise HTTPException(status_code=404, detail="Section not found")

@@ -36,7 +36,7 @@ def update_section(
     client: Client = Depends(get_supabase_client)
 ):
     service = SectionService(client)
-    return service.update_section(section_id, section_in)
+    return service.update_section(section_id, section_in, current_user.id)
 
 @router.delete("/{section_id}")
 def delete_section(
@@ -45,4 +45,4 @@ def delete_section(
     client: Client = Depends(get_supabase_client)
 ):
     service = SectionService(client)
-    return service.delete_section(section_id)
+    return service.delete_section(section_id, current_user.id)

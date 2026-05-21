@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import { ticketService } from '../services/ticketService';
+import { sectionService } from '../services/sectionService';
 import TicketModal from './TicketModal';
+import SectionModal from './SectionModal';
 
 export default function SectionColumn({ section, onDeleteSection, members, isOwner }) {
     const [tickets, setTickets] = useState([]);
     const [newTicketName, setNewTicketName] = useState('');
     const [isAdding, setIsAdding] = useState(false);
     const [editingTicket, setEditingTicket] = useState(null);
+    const [editingSection, setEditingSection] = useState(null);
 
     useEffect(() => { loadTickets(); }, [section.id]);
 
@@ -45,15 +48,25 @@ export default function SectionColumn({ section, onDeleteSection, members, isOwn
         } catch (error) { alert(error.message || "Failed to update ticket"); }
     };
 
+    const handleSaveSection = async (sectionId, updatedData) => {
+        try {
+            await sectionService.updateSection(sectionId, updatedData);
+            setEditingSection(null);
+            window.location.reload();
+        } catch (error) { alert(error.message || "Failed to update section"); }
+    };
+
     return (
         <div style={{ minWidth: '280px', width: '280px', backgroundColor: 'var(--bg-list)', padding: '12px', borderRadius: 'var(--radius-lg)', flexShrink: 0, display: 'flex', flexDirection: 'column', maxHeight: '100%', boxShadow: 'var(--shadow-md)' }}>
             
             {/* List Header */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 8px 12px 8px', borderBottom: '1px solid #e5e7eb' }}>
-                    <h3 style={{ margin: 0, fontSize: '14px', fontWeight: '700', color: 'var(--text-main)', letterSpacing: '0.3px' }}>{section.name}</h3>
-                    <button onClick={() => onDeleteSection(section.id)} style={{ padding: '4px 8px', backgroundColor: 'transparent', color: 'var(--text-light)', border: 'none', cursor: 'pointer', borderRadius: 'var(--radius-sm)', hover: 'background-color 0.2s', fontSize: '16px' }} title="Delete section">
-                    &times;
-                </button>
+                    <h3 onClick={() => isOwner && setEditingSection(section)} style={{ margin: 0, fontSize: '14px', fontWeight: '700', color: 'var(--text-main)', letterSpacing: '0.3px', cursor: isOwner ? 'pointer' : 'default', transition: 'opacity 0.2s' }} onMouseEnter={(e) => isOwner && (e.target.style.opacity = '0.7')} onMouseLeave={(e) => isOwner && (e.target.style.opacity = '1')}>{section.name}</h3>
+                    {isOwner && (
+                        <button onClick={() => onDeleteSection(section.id)} style={{ padding: '4px 8px', backgroundColor: 'transparent', color: 'var(--text-light)', border: 'none', cursor: 'pointer', borderRadius: 'var(--radius-sm)', fontSize: '16px' }} title="Delete section">
+                        &times;
+                    </button>
+                    )}
             </div>
             
             {/* Scrollable Tickets Area */}
@@ -112,6 +125,10 @@ export default function SectionColumn({ section, onDeleteSection, members, isOwn
 
             {editingTicket && (
                 <TicketModal ticket={editingTicket} onClose={() => setEditingTicket(null)} onSave={handleSaveTicket} members={members} />
+            )}
+
+            {editingSection && (
+                <SectionModal section={editingSection} onClose={() => setEditingSection(null)} onSave={handleSaveSection} />
             )}
         </div>
     );

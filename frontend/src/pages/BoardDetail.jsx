@@ -12,27 +12,29 @@ export default function BoardDetail() {
     const [error, setError] = useState('');
     const [board, setBoard] = useState(null);
     const [members, setMembers] = useState([]);
-
+    
+    // Get the current user's email and ID
+    const currentUserEmail = authService.getCurrentUserEmail();
     const currentUserId = authService.getCurrentUserId();
     const isOwner = board?.owner_id === currentUserId;
 
     useEffect(() => {
-    const loadInitialData = async () => {
-        try {
-            const boardData = await boardService.getBoard(boardId);
-            setBoard(boardData);
+        const loadInitialData = async () => {
+            try {
+                const boardData = await boardService.getBoard(boardId);
+                setBoard(boardData);
 
-            // Fetch the member emails
-            const membersData = await boardService.getBoardMembers(boardId);
-            setMembers(membersData);
+                // Fetch the member emails
+                const membersData = await boardService.getBoardMembers(boardId);
+                setMembers(membersData);
 
-            await loadSections();
-        } catch (err) {
-            setError(err.message);
-        }
-    };
-    loadInitialData();
-}, [boardId]);
+                await loadSections();
+            } catch (err) {
+                setError(err.message);
+            }
+        };
+        loadInitialData();
+    }, [boardId]);
 
     const loadSections = async () => {
         try {
@@ -138,46 +140,54 @@ export default function BoardDetail() {
             <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', padding: '24px', flexGrow: 1, alignItems: 'flex-start' }}>
                 
                 {sections.map(section => (
-                    <SectionColumn key={section.id} section={section} onDeleteSection={handleDeleteSection} members={members} isOwner={isOwner} canCreateTickets={Boolean(board)} />
+                    <SectionColumn 
+                        key={section.id} 
+                        section={section} 
+                        onDeleteSection={handleDeleteSection} 
+                        members={members} 
+                        isOwner={isOwner} 
+                        canCreateTickets={Boolean(board)} 
+                        currentUserEmail={currentUserEmail} /* <--- PROP ADDED HERE */
+                    />
                 ))}
 
                 {isOwner && (
                     <form onSubmit={handleCreateSection} style={{ minWidth: '280px', width: '280px', backgroundColor: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: 'var(--radius-lg)', flexShrink: 0, backdropFilter: 'blur(6px)', border: '2px dashed var(--border)', transition: 'all 0.2s' }}>
-                    <input 
-                        type="text" 
-                        placeholder="+ Add another list" 
-                        value={newSectionName} 
-                        onChange={(e) => setNewSectionName(e.target.value)} 
-                        style={{ width: '100%', padding: '12px 14px', boxSizing: 'border-box', marginBottom: '8px', borderRadius: 'var(--radius-md)', border: 'none', backgroundColor: 'var(--bg-card)', boxShadow: 'inset 0 0 0 1px var(--border)', fontSize: '14px', fontWeight: '500', color: 'var(--text-main)' }}
-                    />
-                    {newSectionName && (
-                        <button 
-                            type="submit" 
-                            style={{
-                                width: '100%',
-                                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                                color: 'white',
-                                padding: '10px',
-                                border: 'none',
-                                borderRadius: 'var(--radius-md)',
-                                cursor: 'pointer',
-                                fontWeight: '600',
-                                fontSize: '14px',
-                                transition: 'all 0.2s'
-                            }}
-                            onMouseEnter={(e) => {
-                                e.target.style.transform = 'translateY(-2px)';
-                                e.target.style.boxShadow = 'var(--shadow-md)';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.target.style.transform = 'translateY(0)';
-                                e.target.style.boxShadow = 'none';
-                            }}
-                        >
-                            Add List
-                        </button>
-                    )}
-                </form>
+                        <input 
+                            type="text" 
+                            placeholder="+ Add another list" 
+                            value={newSectionName} 
+                            onChange={(e) => setNewSectionName(e.target.value)} 
+                            style={{ width: '100%', padding: '12px 14px', boxSizing: 'border-box', marginBottom: '8px', borderRadius: 'var(--radius-md)', border: 'none', backgroundColor: 'var(--bg-card)', boxShadow: 'inset 0 0 0 1px var(--border)', fontSize: '14px', fontWeight: '500', color: 'var(--text-main)' }}
+                        />
+                        {newSectionName && (
+                            <button 
+                                type="submit" 
+                                style={{
+                                    width: '100%',
+                                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                    color: 'white',
+                                    padding: '10px',
+                                    border: 'none',
+                                    borderRadius: 'var(--radius-md)',
+                                    cursor: 'pointer',
+                                    fontWeight: '600',
+                                    fontSize: '14px',
+                                    transition: 'all 0.2s'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.target.style.transform = 'translateY(-2px)';
+                                    e.target.style.boxShadow = 'var(--shadow-md)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.target.style.transform = 'translateY(0)';
+                                    e.target.style.boxShadow = 'none';
+                                }}
+                            >
+                                Add List
+                            </button>
+                        )}
+                    </form>
                 )}
             </div>
         </div>

@@ -4,7 +4,7 @@ import { sectionService } from '../services/sectionService';
 import TicketModal from './TicketModal';
 import SectionModal from './SectionModal';
 
-export default function SectionColumn({ section, onDeleteSection, members, isOwner, canCreateTickets }) {
+export default function SectionColumn({ section, onDeleteSection, members, isOwner, canCreateTickets, currentUserEmail }) {
     const [tickets, setTickets] = useState([]);
     const [newTicketName, setNewTicketName] = useState('');
     const [isAdding, setIsAdding] = useState(false);
@@ -70,27 +70,66 @@ export default function SectionColumn({ section, onDeleteSection, members, isOwn
             </div>
             
             {/* Scrollable Tickets Area */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto', padding: '8px 2px', flexGrow: 1 }}>
-                {tickets.map(ticket => (
-                    <div 
-                        key={ticket.id} 
-                        onClick={() => setEditingTicket(ticket)}
-                        onMouseEnter={(e) => {
-                            e.currentTarget.style.boxShadow = 'var(--shadow-hover)';
-                            e.currentTarget.style.transform = 'translateY(-1px)';
-                        }}
-                        onMouseLeave={(e) => {
-                            e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
-                            e.currentTarget.style.transform = 'translateY(0)';
-                        }}
-                            style={{ padding: '10px 12px', backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-md)', color: 'var(--text-main)', fontSize: '13px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', cursor: 'pointer', transition: 'all 0.2s ease', wordBreak: 'break-word', border: '1px solid var(--border)', fontWeight: '500' }}
-                    >
-                        <span>{ticket.name}</span>
-                            <button onClick={(e) => handleDeleteTicket(e, ticket.id)} style={{ border: 'none', backgroundColor: 'transparent', color: 'var(--text-light)', cursor: 'pointer', padding: '0 4px', fontSize: '16px', opacity: 0.6, hover: 'opacity 0.2s' }} title="Delete card">
-                            &times;
-                        </button>
-                    </div>
-                ))}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto', padding: '8px 2px', flexGrow: 1 }}>
+                {tickets.map(ticket => {
+                    const isMyTicket = ticket.assigned_to && ticket.assigned_to === currentUserEmail;
+
+                    return (
+                        <div 
+                            key={ticket.id} 
+                            onClick={() => setEditingTicket(ticket)}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.boxShadow = 'var(--shadow-hover)';
+                                e.currentTarget.style.transform = 'translateY(-1px)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+                                e.currentTarget.style.transform = 'translateY(0)';
+                            }}
+                            style={{ 
+                                padding: '10px 12px', 
+                                backgroundColor: isMyTicket ? 'rgba(124, 58, 237, 0.15)' : 'var(--bg-card)', 
+                                border: isMyTicket ? '1px solid var(--accent)' : '1px solid var(--border)',
+                                borderLeft: isMyTicket ? '3px solid var(--accent)' : '1px solid var(--border)',
+                                borderRadius: 'var(--radius-md)', 
+                                color: isMyTicket ? '#fff' : 'var(--text-main)', 
+                                fontSize: '13px', 
+                                boxShadow: '0 1px 3px rgba(0,0,0,0.08)', 
+                                display: 'flex', 
+                                flexDirection: 'column',
+                                gap: '6px',
+                                cursor: 'pointer', 
+                                transition: 'all 0.2s ease', 
+                                wordBreak: 'break-word', 
+                                fontWeight: '500' 
+                            }}
+                        >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
+                                <span>{ticket.name}</span>
+                                <button 
+                                    onClick={(e) => handleDeleteTicket(e, ticket.id)} 
+                                    style={{ border: 'none', backgroundColor: 'transparent', color: isMyTicket ? 'var(--text-main)' : 'var(--text-light)', cursor: 'pointer', padding: '0 4px', fontSize: '16px', opacity: 0.6 }} 
+                                    title="Delete card"
+                                >
+                                    &times;
+                                </button>
+                            </div>
+                            
+                            {ticket.assigned_to && (
+                                <div style={{ 
+                                    fontSize: '11px', 
+                                    color: isMyTicket ? 'var(--text-main)' : 'var(--text-sub)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '4px'
+                                }}>
+                                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: isMyTicket ? 'var(--success)' : 'var(--text-light)' }}></span>
+                                    {isMyTicket ? 'Assigned to you' : ticket.assigned_to.split('@')[0]}
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
 
                 {/* Inline Card Composer */}
                 {isAdding && (

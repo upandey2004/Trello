@@ -10,7 +10,14 @@ class SectionService:
         res = self.client.table("sections").select("*").eq("board_id", board_id).execute()
         return res.data
 
-    def create_section(self, section_in: SectionCreate):
+    def create_section(self, section_in: SectionCreate, user_id: str):
+        # Only the board owner may add new lists.
+        board_res = self.client.table("boards").select("owner_id").eq("id", section_in.board_id).execute()
+        if not board_res.data:
+            raise HTTPException(status_code=404, detail="Board not found")
+        if board_res.data[0]["owner_id"] != user_id:
+            raise HTTPException(status_code=403, detail="Only the board owner can add a new list")
+
         data = section_in.model_dump()
         res = self.client.table("sections").insert(data).execute()
         return res.data[0]

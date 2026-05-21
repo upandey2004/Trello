@@ -10,7 +10,19 @@ class TicketService:
         res = self.client.table("tickets").select("*").eq("section_id", section_id).order("created_at").execute()
         return res.data
 
-    def create_ticket(self, ticket_in: TicketCreate):
+    def create_ticket(self, ticket_in: TicketCreate, user_id: str):
+        # Only the board owner may add new cards.
+        section_res = self.client.table("sections").select("board_id").eq("id", ticket_in.section_id).execute()
+        if not section_res.data:
+            raise HTTPException(status_code=404, detail="Section not found")
+
+        board_id = section_res.data[0]["board_id"]
+        board_res = self.client.table("boards").select("owner_id").eq("id", board_id).execute()
+        if not board_res.data:
+            raise HTTPException(status_code=404, detail="Board not found")
+        if board_res.data[0]["owner_id"] != user_id:
+            raise HTTPException(status_code=403, detail="Only the board owner can add a new card")
+
         data = ticket_in.model_dump()
         res = self.client.table("tickets").insert(data).execute()
         return res.data[0]

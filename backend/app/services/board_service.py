@@ -1,7 +1,7 @@
 # app/services/board_service.py
 from supabase import Client
 from fastapi import HTTPException, status
-from app.schemas.board import BoardCreate
+from app.schemas.board import BoardCreate, BoardResponse, BoardUpdate
 
 class BoardService:
     def __init__(self, client: Client):
@@ -125,3 +125,40 @@ class BoardService:
         # Extract the emails and return a unique list
         emails = [p["email"] for p in profiles.data]
         return list(set(emails))
+    
+    def update_board(self, board_id: str, board_in, user_id: str):
+        # 1. Fetch the board to check who owns it
+        res = self.client.table("boards").select("owner_id").eq("id", board_id).execute()
+        if not res.data:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=404, detail="Board not found")
+            
+        # 2. Enforce the Owner-Only rule
+        if res.data[0]["owner_id"] != user_id:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=403, detail="Only the board owner can update board details.")
+
+        # 3. Proceed with the update
+        update_data = {k: v for k, v in board_in.model_dump().items() if v is not None}
+        if not update_data:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=400, detail="No data provided to update")
+            
+        update_res = self.client.table("boards").update(update_data).eq("id", board_id).execute()
+        return update_res.data[0]
+
+    def delete_board(self, board_id: str, user_id: str):
+        # 1. Fetch the board to check who owns it
+        res = self.client.table("boards").select("owner_id").eq("id", board_id).execute()
+        if not res.data:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=404, detail="Board not found")
+            
+        # 2. Enforce the Owner-Only rule
+        if res.data[0]["owner_id"] != user_id:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=403, detail="Only the board owner can delete this board.")
+
+        # 3. Proceed with deletion
+        self.client.table("boards").delete().eq("id", board_id).execute()
+        return {"message": "Board deleted successfully"}

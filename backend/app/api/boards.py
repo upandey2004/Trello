@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends
 from supabase import Client
 from app.db.supabase import get_supabase_client
-from app.schemas.board import BoardCreate, BoardResponse
+from app.schemas.board import BoardCreate, BoardResponse, BoardUpdate
 from app.services.board_service import BoardService
 from app.api.dependencies import get_current_user
 
@@ -55,3 +55,24 @@ def get_members(
 ):
     service = BoardService(client)
     return service.get_board_member_emails(board_id)
+
+@router.put("/{board_id}")
+def update_board(
+    board_id: str, 
+    board_in: BoardUpdate, # Assuming you have a BoardUpdate Pydantic schema
+    current_user = Depends(get_current_user),
+    client: Client = Depends(get_supabase_client)
+):
+    service = BoardService(client)
+    # Pass current_user.id here
+    return service.update_board(board_id, board_in, current_user.id)
+
+@router.delete("/{board_id}")
+def delete_board(
+    board_id: str, 
+    current_user = Depends(get_current_user),
+    client: Client = Depends(get_supabase_client)
+):
+    service = BoardService(client)
+    # Pass current_user.id here
+    return service.delete_board(board_id, current_user.id)

@@ -26,7 +26,7 @@ def create_section(
     client: Client = Depends(get_supabase_client)
 ):
     service = SectionService(client)
-    return service.create_section(section_in)
+    return service.create_section(section_in, current_user.id)
 
 @router.put("/{section_id}", response_model=SectionResponse)
 def update_section(

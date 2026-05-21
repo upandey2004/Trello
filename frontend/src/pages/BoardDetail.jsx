@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { sectionService } from '../services/sectionService';
 import { boardService } from '../services/boardService';
+import { authService } from '../services/authService';
 import SectionColumn from '../components/SectionColumn'; 
 
 export default function BoardDetail() {
@@ -11,6 +12,9 @@ export default function BoardDetail() {
     const [error, setError] = useState('');
     const [board, setBoard] = useState(null);
     const [members, setMembers] = useState([]);
+
+    const currentUserId = authService.getCurrentUserId();
+    const isOwner = board?.owner_id === currentUserId;
 
     useEffect(() => {
     const loadInitialData = async () => {
@@ -134,11 +138,11 @@ export default function BoardDetail() {
             <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', padding: '24px', flexGrow: 1, alignItems: 'flex-start' }}>
                 
                 {sections.map(section => (
-                    <SectionColumn key={section.id} section={section} onDeleteSection={handleDeleteSection} members={members} />
+                    <SectionColumn key={section.id} section={section} onDeleteSection={handleDeleteSection} members={members} isOwner={isOwner} />
                 ))}
 
-                {/* Add List Form */}
-                <form onSubmit={handleCreateSection} style={{ minWidth: '280px', width: '280px', backgroundColor: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: 'var(--radius-lg)', flexShrink: 0, backdropFilter: 'blur(6px)', border: '2px dashed var(--border)', transition: 'all 0.2s' }}>
+                {isOwner && (
+                    <form onSubmit={handleCreateSection} style={{ minWidth: '280px', width: '280px', backgroundColor: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: 'var(--radius-lg)', flexShrink: 0, backdropFilter: 'blur(6px)', border: '2px dashed var(--border)', transition: 'all 0.2s' }}>
                     <input 
                         type="text" 
                         placeholder="+ Add another list" 
@@ -174,6 +178,7 @@ export default function BoardDetail() {
                         </button>
                     )}
                 </form>
+                )}
             </div>
         </div>
     );

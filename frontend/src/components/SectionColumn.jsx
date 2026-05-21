@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { ticketService } from '../services/ticketService';
 import TicketModal from './TicketModal';
 
-export default function SectionColumn({ section, onDeleteSection,members }) {
+export default function SectionColumn({ section, onDeleteSection, members, isOwner }) {
     const [tickets, setTickets] = useState([]);
     const [newTicketName, setNewTicketName] = useState('');
     const [isAdding, setIsAdding] = useState(false);
@@ -99,12 +99,12 @@ export default function SectionColumn({ section, onDeleteSection,members }) {
             </div>
 
             {/* Add Card Trigger */}
-            {!isAdding && (
+            {isOwner && !isAdding && (
                 <button 
                     onClick={() => setIsAdding(true)} 
-                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                        style={{ width: '100%', backgroundColor: 'transparent', color: 'var(--text-sub)', textAlign: 'left', padding: '8px 12px', border: 'none', cursor: 'pointer', borderRadius: 'var(--radius-sm)', marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px', transition: 'background-color 0.2s', fontSize: '13px', fontWeight: '500' }}
+                    style={{ width: '100%', backgroundColor: 'transparent', color: 'var(--text-sub)', textAlign: 'left', padding: '8px 12px', border: 'none', cursor: 'pointer', borderRadius: 'var(--radius-sm)', marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px', transition: 'background-color 0.2s', fontSize: '13px', fontWeight: '500' }}
                 >
                     <span style={{ fontSize: '18px' }}>+</span> Add a card
                 </button>

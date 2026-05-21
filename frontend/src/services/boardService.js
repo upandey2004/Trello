@@ -8,5 +8,6 @@ export const boardService = {
     }),
     
     getBoard: (boardId) => fetchWithAuth(`/boards/${boardId}`),
-    joinBoard: (token) => fetchWithAuth(`/boards/join/${token}`, { method: 'POST' })
+    joinBoard: (token) => fetchWithAuth(`/boards/join/${token}`, { method: 'POST' }),
+    getBoardMembers: (boardId) => fetchWithAuth(`/boards/${boardId}/members`)
 };

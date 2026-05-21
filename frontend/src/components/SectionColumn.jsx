@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { ticketService } from '../services/ticketService';
 import TicketModal from './TicketModal';
 
-export default function SectionColumn({ section, onDeleteSection }) {
+export default function SectionColumn({ section, onDeleteSection,members }) {
     const [tickets, setTickets] = useState([]);
     const [newTicketName, setNewTicketName] = useState('');
     const [isAdding, setIsAdding] = useState(false);
@@ -111,7 +111,7 @@ export default function SectionColumn({ section, onDeleteSection }) {
             )}
 
             {editingTicket && (
-                <TicketModal ticket={editingTicket} onClose={() => setEditingTicket(null)} onSave={handleSaveTicket} />
+                <TicketModal ticket={editingTicket} onClose={() => setEditingTicket(null)} onSave={handleSaveTicket} members={members} />
             )}
         </div>
     );

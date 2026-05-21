@@ -38,17 +38,40 @@ class BoardService:
         except Exception as e:
             raise HTTPException(status_code=400, detail=str(e))
         
+    def get_boards(self, user_id: str):
+        # Fetch boards I created
+        owned = self.client.table("boards").select("*").eq("owner_id", user_id).execute()
+        
+        # Fetch boards I was invited to
+        member_of = self.client.table("board_members").select("boards(*)").eq("user_id", user_id).execute()
+        
+        # Combine them
+        boards = owned.data
+        for record in member_of.data:
+            if record.get("boards"):
+                boards.append(record["boards"])
+        return boards
+    
     def get_board(self, board_id: str, user_id: str):
-        # 1. Verify the user is actually a member of this board
-        member_check = self.client.table("board_members").select("*").eq("board_id", board_id).eq("user_id", user_id).execute()
-        if not member_check.data:
-            raise HTTPException(status_code=403, detail="You do not have access to this board")
-            
-        # 2. Fetch and return the board details
+        # 1. Fetch the board details
         res = self.client.table("boards").select("*").eq("id", board_id).execute()
         if not res.data:
+            from fastapi import HTTPException
             raise HTTPException(status_code=404, detail="Board not found")
-        return res.data[0]
+            
+        board = res.data[0]
+        
+        # 2. Check if the user is the owner
+        if board["owner_id"] == user_id:
+            return board
+            
+        # 3. If not the owner, check if they are an invited member
+        member_check = self.client.table("board_members").select("*").eq("board_id", board_id).eq("user_id", user_id).execute()
+        if not member_check.data:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=403, detail="You do not have access to this board")
+            
+        return board
 
     def join_board(self, user_id: str, token: str):
         # 1. Find the board by its unique invitation token
@@ -82,3 +105,23 @@ class BoardService:
             # we will return just the user_id for now.
             members.append(item)
         return members
+    
+    def get_board_member_emails(self, board_id: str):
+        # 1. Get the board owner's ID
+        board = self.client.table("boards").select("owner_id").eq("id", board_id).execute()
+        owner_id = board.data[0]["owner_id"]
+        
+        # 2. Get all invited member IDs
+        members = self.client.table("board_members").select("user_id").eq("board_id", board_id).execute()
+        
+        # 3. Combine owner and member IDs into one list
+        all_user_ids = [owner_id]
+        for m in members.data:
+            all_user_ids.append(m["user_id"])
+            
+        # 4. Fetch the emails from the profiles table for all these IDs at once
+        profiles = self.client.table("profiles").select("email").in_("id", all_user_ids).execute()
+        
+        # Extract the emails and return a unique list
+        emails = [p["email"] for p in profiles.data]
+        return list(set(emails))

@@ -48,10 +48,10 @@ def join_board_via_token(
     return service.join_board(current_user.id, token)
 
 @router.get("/{board_id}/members")
-def get_board_members(
+def get_members(
     board_id: str,
     current_user = Depends(get_current_user),
     client: Client = Depends(get_supabase_client)
 ):
     service = BoardService(client)
-    return service.get_board_members(board_id)
+    return service.get_board_member_emails(board_id)

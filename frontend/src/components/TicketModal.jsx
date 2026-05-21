@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export default function TicketModal({ ticket, onClose, onSave }) {
+export default function TicketModal({ ticket, onClose, onSave, members = [] }) {
     // Local state for the form so we only save when the user clicks "Save"
     const [name, setName] = useState(ticket.name);
     const [description, setDescription] = useState(ticket.description || '');
@@ -46,16 +46,19 @@ export default function TicketModal({ ticket, onClose, onSave }) {
                         />
                     </div>
 
-                    {/* New Assigned To Field */}
+                    {/* Dropdown Assigned To Field */}
                     <div>
-                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: 'var(--text-main)', fontSize: '14px' }}>Assigned To (Email Address)</label>
-                        <input 
-                            type="text" 
+                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: 'var(--text-main)', fontSize: '14px' }}>Assigned To</label>
+                        <select 
                             value={assignedTo} 
                             onChange={(e) => setAssignedTo(e.target.value)} 
-                            placeholder="Paste User Email here..."
-                                style={{ width: '100%', padding: '10px 12px', boxSizing: 'border-box', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', fontSize: '14px', fontFamily: 'inherit', transition: 'all 0.2s', background: 'var(--bg-card)', color: 'var(--text-main)' }}
-                        />
+                            style={{ width: '100%', padding: '10px 12px', boxSizing: 'border-box', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', fontSize: '14px', fontFamily: 'inherit', transition: 'all 0.2s', background: 'var(--bg-card)', color: 'var(--text-main)', cursor: 'pointer', appearance: 'auto' }}
+                        >
+                            <option value="">-- Unassigned --</option>
+                            {members.map(email => (
+                                <option key={email} value={email}>{email}</option>
+                            ))}
+                        </select>
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>

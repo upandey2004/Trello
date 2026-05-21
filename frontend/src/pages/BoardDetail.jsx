@@ -10,19 +10,25 @@ export default function BoardDetail() {
     const [newSectionName, setNewSectionName] = useState('');
     const [error, setError] = useState('');
     const [board, setBoard] = useState(null);
+    const [members, setMembers] = useState([]);
 
     useEffect(() => {
-        const loadInitialData = async () => {
-            try {
-                const boardData = await boardService.getBoard(boardId);
-                setBoard(boardData);
-                await loadSections();
-            } catch (err) {
-                setError(err.message);
-            }
-        };
-        loadInitialData();
-    }, [boardId]);
+    const loadInitialData = async () => {
+        try {
+            const boardData = await boardService.getBoard(boardId);
+            setBoard(boardData);
+
+            // Fetch the member emails
+            const membersData = await boardService.getBoardMembers(boardId);
+            setMembers(membersData);
+
+            await loadSections();
+        } catch (err) {
+            setError(err.message);
+        }
+    };
+    loadInitialData();
+}, [boardId]);
 
     const loadSections = async () => {
         try {
@@ -128,7 +134,7 @@ export default function BoardDetail() {
             <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', padding: '24px', flexGrow: 1, alignItems: 'flex-start' }}>
                 
                 {sections.map(section => (
-                    <SectionColumn key={section.id} section={section} onDeleteSection={handleDeleteSection} />
+                    <SectionColumn key={section.id} section={section} onDeleteSection={handleDeleteSection} members={members} />
                 ))}
 
                 {/* Add List Form */}

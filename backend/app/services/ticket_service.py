@@ -1,5 +1,6 @@
 from supabase import Client
 from fastapi import HTTPException
+from postgrest.exceptions import APIError
 from app.schemas.ticket import TicketCreate, TicketUpdate
 
 class TicketService:
@@ -11,7 +12,7 @@ class TicketService:
         return res.data
 
     def create_ticket(self, ticket_in: TicketCreate, user_id: str):
-        # Only the board owner may add new cards.
+        # Any board member may add new cards.
         section_res = self.client.table("sections").select("board_id").eq("id", ticket_in.section_id).execute()
         if not section_res.data:
             raise HTTPException(status_code=404, detail="Section not found")
@@ -20,15 +21,38 @@ class TicketService:
         board_res = self.client.table("boards").select("owner_id").eq("id", board_id).execute()
         if not board_res.data:
             raise HTTPException(status_code=404, detail="Board not found")
-        if board_res.data[0]["owner_id"] != user_id:
-            raise HTTPException(status_code=403, detail="Only the board owner can add a new card")
+
+        owner_id = board_res.data[0]["owner_id"]
+        member_check = self.client.table("board_members").select("*").eq("board_id", board_id).eq("user_id", user_id).execute()
+        if owner_id != user_id and not member_check.data:
+            raise HTTPException(status_code=403, detail="Only board members can add a new card")
 
         data = ticket_in.model_dump()
-        res = self.client.table("tickets").insert(data).execute()
+        data["created_by"] = user_id
+
+        try:
+            res = self.client.table("tickets").insert(data).execute()
+        except Exception as exc:
+            err = exc.args[0] if exc.args else exc
+            err_msg = ""
+            err_code = None
+
+            if isinstance(err, dict):
+                err_msg = err.get("message", "")
+                err_code = err.get("code")
+            else:
+                err_msg = str(err)
+
+            if err_code == "PGRST204" or "created_by" in err_msg:
+                data.pop("created_by", None)
+                res = self.client.table("tickets").insert(data).execute()
+            else:
+                raise
+
         return res.data[0]
 
     def _check_permissions(self, ticket_id: str, user_id: str, user_email: str):
-        """Helper method to ensure only owners or assigned creators can modify tickets."""
+        """Helper method to ensure only board owner or ticket creator can modify tickets."""
         ticket_res = self.client.table("tickets").select("*, sections(board_id)").eq("id", ticket_id).execute()
         if not ticket_res.data:
             raise HTTPException(status_code=404, detail="Ticket not found")
@@ -39,9 +63,9 @@ class TicketService:
         board_res = self.client.table("boards").select("owner_id").eq("id", board_id).execute()
         owner_id = board_res.data[0]["owner_id"]
         
-        # We now check if the user is the owner, OR if their email matches the assigned_to field
-        if user_id != owner_id and user_email != ticket.get("assigned_to"):
-            raise HTTPException(status_code=403, detail="Only the board owner or assigned user can modify this ticket.")
+        # Board owner can always modify. Invited users can only modify tickets they created.
+        if user_id != owner_id and user_id != ticket.get("created_by"):
+            raise HTTPException(status_code=403, detail="Only the board owner or ticket creator can modify this ticket.")
             
         return ticket
 

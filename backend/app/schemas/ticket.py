@@ -20,4 +20,5 @@ class TicketResponse(BaseModel):
     name: str
     description: Optional[str] = None
     assigned_to: Optional[str] = None
+    created_by: Optional[str] = None
     created_at: datetime

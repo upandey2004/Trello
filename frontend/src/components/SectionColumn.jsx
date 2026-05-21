@@ -4,7 +4,7 @@ import { sectionService } from '../services/sectionService';
 import TicketModal from './TicketModal';
 import SectionModal from './SectionModal';
 
-export default function SectionColumn({ section, onDeleteSection, members, isOwner }) {
+export default function SectionColumn({ section, onDeleteSection, members, isOwner, canCreateTickets }) {
     const [tickets, setTickets] = useState([]);
     const [newTicketName, setNewTicketName] = useState('');
     const [isAdding, setIsAdding] = useState(false);
@@ -112,7 +112,7 @@ export default function SectionColumn({ section, onDeleteSection, members, isOwn
             </div>
 
             {/* Add Card Trigger */}
-            {isOwner && !isAdding && (
+            {canCreateTickets && !isAdding && (
                 <button 
                     onClick={() => setIsAdding(true)} 
                     onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}

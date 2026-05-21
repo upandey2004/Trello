@@ -138,7 +138,7 @@ export default function BoardDetail() {
             <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', padding: '24px', flexGrow: 1, alignItems: 'flex-start' }}>
                 
                 {sections.map(section => (
-                    <SectionColumn key={section.id} section={section} onDeleteSection={handleDeleteSection} members={members} isOwner={isOwner} />
+                    <SectionColumn key={section.id} section={section} onDeleteSection={handleDeleteSection} members={members} isOwner={isOwner} canCreateTickets={Boolean(board)} />
                 ))}
 
                 {isOwner && (

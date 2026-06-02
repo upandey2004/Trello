@@ -73,6 +73,7 @@ CREATE TABLE tickets (
 3. Install dependencies:
    \`\`\`bash
    pip install -r requirements.txt
+   pip install -r requirements-test.txt
    \`\`\`
 4. Create a `.env` file in the `backend` folder and add your Supabase credentials:
    \`\`\`env
@@ -103,3 +104,57 @@ CREATE TABLE tickets (
    npm run dev
    \`\`\`
    *The frontend will run on http://localhost:5173*
+
+---
+
+## 🧪 Testing Environment Setup
+
+The backend features a comprehensive testing suite using `pytest`. It includes isolated unit tests (using a mocked database) and integration tests (hitting the live Supabase instance with teardown logic).
+
+### 1. Test Environment Variables
+To run the integration tests safely, you must provide a valid test user ID in your backend `.env` file. This is used to bypass authentication during automated tests.
+
+Update your `backend/.env` file to include:
+\`\`\`env
+SUPABASE_URL=https://your-project-id.supabase.co
+SUPABASE_KEY=your-anon-public-key
+TEST_USER_ID=your-real-user-uuid-from-supabase-auth
+\`\`\`
+
+### 2. Running Tests
+Ensure your virtual environment is activated and you are in the `backend` directory. *(Note: We use `python -m pytest` to automatically resolve path and import issues).*
+
+* **Run all tests (Unit + Integration):**
+    \`\`\`bash
+    python -m pytest
+    \`\`\`
+* **Run only Unit Tests (Fast, no DB required):**
+    \`\`\`bash
+    python -m pytest tests/unit/
+    \`\`\`
+* **Run only Integration Tests (Requires DB & TEST_USER_ID):**
+    \`\`\`bash
+    python -m pytest tests/integration/
+    \`\`\`
+
+### 3. Generating Coverage Reports
+We use `pytest-cov` to measure code coverage.
+
+* **Generate Combined Coverage Report:**
+    \`\`\`bash
+    python -m pytest --cov=app --cov-report=html tests/
+    \`\`\`
+* **Generate Separate Reports:**
+    \`\`\`bash
+    python -m pytest --cov=app --cov-report=html:htmlcov_unit tests/unit/
+    python -m pytest --cov=app --cov-report=html:htmlcov_integration tests/integration/
+    \`\`\`
+
+### 4. Viewing the Reports
+To view the interactive HTML coverage reports with their proper styling, start a local Python web server inside the generated directory:
+
+\`\`\`bash
+cd htmlcov  # Or htmlcov_unit / htmlcov_integration
+python -m http.server 8080
+\`\`\`
+Then, open `http://localhost:8080` in your web browser. When finished, press `Ctrl+C` in the terminal to stop the server.

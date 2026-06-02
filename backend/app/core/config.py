@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Trello Clone API"
     SUPABASE_URL: str
     SUPABASE_KEY: str
+    TEST_USER_ID: str
 
     model_config = SettingsConfigDict(
         env_file=BASE_DIR / ".env",

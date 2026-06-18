@@ -158,3 +158,91 @@ cd htmlcov  # Or htmlcov_unit / htmlcov_integration
 python -m http.server 8080
 \`\`\`
 Then, open `http://localhost:8080` in your web browser. When finished, press `Ctrl+C` in the terminal to stop the server.
+
+---
+
+## 🐳 Testing the Docker Environment
+
+This step-by-step guide explains how to start and verify all 5 Docker containers (Database, Authentication, API, Backend, and Nginx) in your local setup.
+
+### 1. Start the Containers
+Ensure your `.env` file is populated in the root directory. Then, from the root folder, start the entire stack:
+```bash
+docker compose -f backend/docker-compose.yml up -d
+```
+Verify all 5 containers are actively running:
+```bash
+docker ps
+```
+You should see: `trello_nginx` (Port 8080), `trello_backend` (Port 8000), `trello_db` (Port 5432), `trello_auth` (GoTrue), and `trello_postgrest`.
+
+### 2. Import the Database Schema
+If this is your first time setting up the database, you must manually inject the schema into the running database container. Run:
+```bash
+cat backend/schema.sql | docker exec -i trello_db psql -U postgres
+```
+*(This will output a series of `CREATE TABLE`, `ALTER TABLE`, and `GRANT` confirmations).*
+
+### 3. Test Container 1: The Database (`trello_db`)
+Log directly into the Postgres terminal inside the container:
+```bash
+docker exec -it trello_db psql -U postgres
+```
+List the tables to prove your schema is properly set up:
+```sql
+\dt
+```
+*(You should see `boards`, `tickets`, `sections`, etc. Type `\q` to exit the database).*
+
+### 4. Test Container 2: Nginx Reverse Proxy (`trello_nginx`)
+Nginx is the gateway serving on port `8080`. By successfully completing tests 3, 4, and 5 below using port `8080`, you are simultaneously proving that Nginx is flawlessly routing traffic!
+
+### 5. Test Container 3: FastAPI Backend (`trello_backend`)
+Open your browser and navigate to:
+**http://localhost:8080/api/v1/boards**
+
+* **Expected Result:** `{"detail": "Not authenticated"}`
+* **Why this is a success:** It proves your FastAPI backend is running, connected to the `.env` file, communicating with Nginx, and actively protecting your routes from unauthenticated users.
+
+### 6. Test Container 4: Supabase GoTrue Auth (`trello_auth`)
+Open your browser and navigate to:
+**http://localhost:8080/auth/v1/settings**
+
+* **Expected Result:** A JSON object showing GoTrue's internal configuration (e.g., `{"disable_signup": false, ...}`).
+* **Why this is a success:** It proves the Auth container is alive and correctly receiving traffic routed to `/auth/v1/` by Nginx.
+
+### 7. Test Container 5: Supabase PostgREST (`trello_postgrest`)
+Open your browser and navigate to:
+**http://localhost:8080/rest/v1/**
+
+* **Expected Result:** A massive OpenAPI JSON schema detailing your database tables (`boards`, `tickets`, etc.).
+* **Why this is a success:** It proves PostgREST has successfully connected to your database, read your schema, and is exposing it securely via Nginx.
+
+---
+
+## 🐍 Testing the Local (Uvicorn) Environment
+
+If you prefer to run the backend natively using Python rather than Docker, follow these steps to start and verify your local Uvicorn environment.
+
+### 1. Start the Server
+Ensure you have activated your Python virtual environment and are inside the `backend` directory. Your `.env` file must be present with valid `SUPABASE_URL`, `SUPABASE_KEY`, and `TEST_USER_ID` variables.
+
+Run the Uvicorn development server:
+```bash
+uvicorn app.main:app --reload
+```
+You should see output indicating that Uvicorn is running on `http://127.0.0.1:8000`.
+
+### 2. Verify the Protected Routes
+Open your browser and navigate to:
+**http://127.0.0.1:8000/api/v1/boards**
+
+* **Expected Result:** `{"detail": "Not authenticated"}`
+* **Why this is a success:** This confirms that the FastAPI application is correctly loaded by Uvicorn, is reading your local `.env` file, and is successfully intercepting unauthorized requests.
+
+### 3. Verify the OpenAPI Documentation
+FastAPI automatically generates interactive Swagger documentation. Test it by navigating to:
+**http://127.0.0.1:8000/docs**
+
+* **Expected Result:** A fully interactive Swagger UI displaying all your defined API endpoints (e.g., Auth, Boards, Sections, Tickets).
+* **Why this is a success:** It proves that all your FastAPI routers are correctly imported, registered, and functioning in `app.main`.
